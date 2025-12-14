@@ -1,0 +1,61 @@
+# Traefik Dynamic Configuration
+# Location on Traefik LXC: /etc/traefik/conf.d/services.yaml
+
+http:
+  routers:
+    # Immich - Photo Management
+    immich:
+      rule: "Host(`immich.harmeetrai.com`)"
+      service: immich
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    # n8n - Workflow Automation
+    n8n:
+      rule: "Host(`n8n.harmeetrai.com`)"
+      service: n8n
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    # Grafana - Dashboards
+    grafana:
+      rule: "Host(`grafana.harmeetrai.com`)"
+      service: grafana
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    # Prometheus - Metrics (optional external access)
+    prometheus:
+      rule: "Host(`prometheus.harmeetrai.com`)"
+      service: prometheus
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    immich:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.121:2283"
+
+    n8n:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.122:5678"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.124:3000"
+
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.123:9090"
