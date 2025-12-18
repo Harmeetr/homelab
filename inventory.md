@@ -12,6 +12,7 @@
 | 109 | n8n | 192.168.1.122 | Running |
 | 110 | Prometheus | 192.168.1.123 | Running |
 | 111 | Grafana | 192.168.1.124 | Running |
+| 130 | Claude Agent | 192.168.1.126 | Running |
 | — | Plex | — | Not installed |
 | — | Jellyfin | — | Not installed |
 | — | Radarr | — | Not installed |
@@ -81,6 +82,20 @@
 - **Port:** 3000
 - **URL:** grafana.harmeetrai.com
 - **Notes:** Dashboards
+
+---
+
+### Development
+
+#### Claude Agent (ID: 130)
+- **IP:** 192.168.1.126
+- **Port:** 22 (SSH only)
+- **User:** claude
+- **Claude CLI:** `/home/claude/.npm-global/bin/claude`
+- **Notes:** Ubuntu LXC running Claude CLI. Accessed via SSH from n8n for AI-powered automations.
+- **Dependencies:** Node.js 20, Claude CLI
+- **SSH Access:** n8n (192.168.1.122) has ed25519 keypair access
+- **Workflows:** [Spotify Playlist Generator](docs/runbooks/spotify-playlist-automation.md)
 
 ---
 

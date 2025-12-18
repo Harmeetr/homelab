@@ -66,6 +66,11 @@ Personal server infrastructure running 15+ self-hosted services for media manage
 | **n8n** | Workflow automation | 5678 |
 | **Vaultwarden** | Password manager | 80 |
 
+### AI/Automation
+| Service | Purpose | Port |
+|---------|---------|------|
+| **Claude Agent** | Claude CLI for AI automations | 22 (SSH) |
+
 ## Storage Architecture
 
 | Storage | Type | Size | Purpose |
@@ -157,6 +162,9 @@ All services are exposed via Cloudflare Tunnel through Traefik:
 - [Runbooks](docs/runbooks/)
   - [Backup & Restore](docs/runbooks/backup-restore.md)
   - [Adding New Services](docs/runbooks/add-new-service.md)
+  - [Spotify Playlist Automation](docs/runbooks/spotify-playlist-automation.md)
+- [Plans](docs/plans/)
+  - [Spotify Library Organization System](docs/plans/spotify-library-system.md)
 
 ## Acknowledgments
 
