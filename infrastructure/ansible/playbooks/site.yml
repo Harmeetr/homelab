@@ -1,0 +1,21 @@
+---
+- name: Apply common configuration to all hosts
+  hosts: all
+  roles:
+    - common
+
+- name: Configure core infrastructure
+  hosts: core
+  roles:
+    - role: docker
+      when: "'docker' in group_names or inventory_hostname in ['traefik']"
+
+- name: Configure app servers
+  hosts: apps
+  roles:
+    - docker
+
+- name: Configure monitoring stack
+  hosts: monitoring
+  roles:
+    - docker

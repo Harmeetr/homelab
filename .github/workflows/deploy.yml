@@ -1,0 +1,68 @@
+name: Deploy Homelab Configs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'configs/**'
+      - 'infrastructure/ansible/**'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target host (traefik, homepage, or all)'
+        required: false
+        default: 'all'
+
+env:
+  ANSIBLE_HOST_KEY_CHECKING: 'false'
+  ANSIBLE_FORCE_COLOR: 'true'
+
+jobs:
+  deploy:
+    name: Deploy Configs
+    runs-on: [self-hosted, homelab]
+    if: github.repository_owner == 'harmeetrai'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine deployment targets
+        id: targets
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TARGET="${{ github.event.inputs.target }}"
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD -- configs/ 2>/dev/null | cut -d'/' -f2 | sort -u | tr '\n' ',' | sed 's/,$//' || echo "all")
+            TARGET="${CHANGED:-all}"
+          fi
+          echo "hosts=$TARGET" >> $GITHUB_OUTPUT
+          echo "Deployment targets: $TARGET"
+
+      - name: Run Ansible deployment
+        working-directory: infrastructure/ansible
+        run: |
+          TARGET="${{ steps.targets.outputs.hosts }}"
+
+          if [ "$TARGET" = "all" ] || [ -z "$TARGET" ]; then
+            echo "Deploying to ALL config-managed hosts"
+            ansible-playbook playbooks/deploy-configs.yml -i inventory/hosts.yml
+          else
+            LIMIT=$(echo "$TARGET" | tr ',' ':')
+            echo "Deploying to: $LIMIT"
+            ansible-playbook playbooks/deploy-configs.yml -i inventory/hosts.yml --limit "$LIMIT"
+          fi
+
+      - name: Create deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Targets** | ${{ steps.targets.outputs.hosts }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Triggered by** | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY

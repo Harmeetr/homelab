@@ -1,0 +1,29 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install common packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - wget
+      - vim
+      - htop
+      - git
+      - ca-certificates
+      - gnupg
+      - lsb-release
+    state: present
+
+- name: Set timezone
+  community.general.timezone:
+    name: America/Vancouver
+
+- name: Ensure SSH key is present
+  ansible.posix.authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+  failed_when: false

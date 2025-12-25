@@ -1,0 +1,19 @@
+---
+# Homepage Dashboard Settings
+# Managed via GitOps - changes here auto-deploy to Homepage LXC
+
+title: Homelab
+theme: dark
+color: slate
+headerStyle: clean
+
+layout:
+  Core Infrastructure:
+    style: row
+    columns: 4
+  Applications:
+    style: row
+    columns: 3
+  Monitoring:
+    style: row
+    columns: 3

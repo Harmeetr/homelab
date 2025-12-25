@@ -2,8 +2,43 @@
 # Location on Traefik LXC: /etc/traefik/conf.d/services.yaml
 
 http:
+  middlewares:
+    authentik:
+      forwardAuth:
+        address: http://192.168.1.125:9000/outpost.goauthentik.io/auth/traefik
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-authentik-username
+          - X-authentik-groups
+          - X-authentik-email
+          - X-authentik-name
+          - X-authentik-uid
+
   routers:
-    # Immich - Photo Management
+    authentik:
+      rule: "Host(`auth.harmeetrai.com`)"
+      service: authentik
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    homepage:
+      rule: "Host(`home.harmeetrai.com`)"
+      service: homepage
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    uptime-kuma:
+      rule: "Host(`status.harmeetrai.com`)"
+      service: uptime-kuma
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
     immich:
       rule: "Host(`immich.harmeetrai.com`)"
       service: immich
@@ -39,7 +74,54 @@ http:
       tls:
         certResolver: letsencrypt
 
+    vikunja:
+      rule: "Host(`tasks.harmeetrai.com`)"
+      service: vikunja
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    linkwarden:
+      rule: "Host(`links.harmeetrai.com`)"
+      service: linkwarden
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    actualbudget:
+      rule: "Host(`budget.harmeetrai.com`)"
+      service: actualbudget
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    miniflux:
+      rule: "Host(`rss.harmeetrai.com`)"
+      service: miniflux
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
   services:
+    authentik:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.125:9000"
+
+    homepage:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.127:3000"
+
+    uptime-kuma:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.150:3001"
+
     immich:
       loadBalancer:
         servers:
@@ -59,3 +141,23 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.1.123:9090"
+
+    vikunja:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.132:3456"
+
+    linkwarden:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.133:3000"
+
+    actualbudget:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.134:5006"
+
+    miniflux:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.136:8080"

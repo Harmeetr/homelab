@@ -1,0 +1,46 @@
+---
+# Homepage Dashboard Services Configuration
+# Managed via GitOps - changes here auto-deploy to Homepage LXC
+
+- Core Infrastructure:
+    - Traefik:
+        href: http://192.168.1.116:8080
+        icon: traefik.png
+        description: Reverse Proxy
+    - PostgreSQL:
+        icon: postgres.png
+        description: Database Server
+    - Redis:
+        icon: redis.png
+        description: Cache Server
+    - Cloudflared:
+        icon: cloudflare.png
+        description: Tunnel
+
+- Applications:
+    - Immich:
+        href: https://immich.harmeetrai.com
+        icon: immich.png
+        description: Photo Management
+    - n8n:
+        href: https://n8n.harmeetrai.com
+        icon: n8n.png
+        description: Workflow Automation
+    - Homepage:
+        href: https://home.harmeetrai.com
+        icon: homepage.png
+        description: Dashboard
+
+- Monitoring:
+    - Prometheus:
+        href: https://prometheus.harmeetrai.com
+        icon: prometheus.png
+        description: Metrics Collection
+    - Grafana:
+        href: https://grafana.harmeetrai.com
+        icon: grafana.png
+        description: Dashboards
+    - Uptime Kuma:
+        href: https://status.harmeetrai.com
+        icon: uptime-kuma.png
+        description: Status Page

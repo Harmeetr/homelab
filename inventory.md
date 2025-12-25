@@ -2,130 +2,99 @@
 
 ## Quick Reference
 
-| ID | Service | IP | Status |
-|----|---------|-----|--------|
-| 104 | Traefik | 192.168.1.116 | Running |
-| 105 | PostgreSQL | 192.168.1.117 | Running |
-| 106 | Redis | 192.168.1.118 | Running |
-| 107 | Cloudflared | 192.168.1.120 | Running |
-| 108 | Immich | 192.168.1.121 | Running |
-| 109 | n8n | 192.168.1.122 | Running |
-| 110 | Prometheus | 192.168.1.123 | Running |
-| 111 | Grafana | 192.168.1.124 | Running |
-| 130 | Claude Agent | 192.168.1.126 | Running |
-| — | Plex | — | Not installed |
-| — | Jellyfin | — | Not installed |
-| — | Radarr | — | Not installed |
-| — | Sonarr | — | Not installed |
-| — | Prowlarr | — | Not installed |
-| — | qBittorrent | — | Not installed |
-| — | Nextcloud | — | Not installed |
-| — | Vaultwarden | — | Not installed |
+### Running Containers (NOT managed by Terraform)
+
+| ID | Service | IP | Port | Category | Notes |
+|----|---------|-----|------|----------|-------|
+| 104 | Traefik | 192.168.1.116 | 80,443 | Core | |
+| 105 | PostgreSQL | 192.168.1.117 | 5432 | Core | |
+| 106 | Redis | 192.168.1.118 | 6379 | Core | |
+| 107 | Cloudflared | 192.168.1.120 | — | Core | |
+| 108 | Immich | 192.168.1.121 | 2283 | Apps | [Mounts](#immich-storage-mounts) |
+| 109 | n8n | 192.168.1.122 | 5678 | Apps | |
+| 110 | Prometheus | 192.168.1.123 | 9090 | Monitoring | |
+| 111 | Grafana | 192.168.1.124 | 3000 | Monitoring | |
+| 113 | Homepage | 192.168.1.127 | 3000 | Apps | |
+| 130 | Claude Agent | 192.168.1.126 | 22 | Dev | |
+
+### New Containers (Managed by Terraform)
+
+| ID | Service | IP | Port | Category | Status |
+|----|---------|-----|------|----------|--------|
+| 140 | Uptime Kuma | 192.168.1.150 | 3001 | Monitoring | Planned |
+| 122 | Vikunja | 192.168.1.132 | 3456 | Apps | Planned |
+| 123 | Linkwarden | 192.168.1.133 | 3000 | Apps | Planned |
+| 124 | Actual Budget | 192.168.1.134 | 5006 | Apps | Planned |
+| 126 | Miniflux | 192.168.1.136 | 8080 | Apps | Planned |
+
+### Future Containers (No Helper Script Available)
+
+| ID | Service | IP | Notes |
+|----|---------|-----|-------|
+| 112 | Authentik | 192.168.1.125 | No helper script - deploy via Docker |
+| 131 | Ollama | 192.168.1.141 | Requires GPU passthrough |
+| — | CrowdSec | — | Addon only - install on Traefik LXC |
+
+### Media Stack (Future)
+
+| ID | Service | IP | Port | Notes |
+|----|---------|-----|------|-------|
+| 114 | Jellyfin | 192.168.1.140 | 8096 | |
+| 115 | Sonarr | 192.168.1.141 | 8989 | |
+| 116 | Radarr | 192.168.1.142 | 7878 | |
+| 117 | Prowlarr | 192.168.1.143 | 9696 | |
+| 118 | qBittorrent | 192.168.1.144 | 8080 | |
 
 ---
 
-## Detailed Information
+## Service URLs
 
-### Core Infrastructure
-
-#### Traefik (ID: 104)
-- **IP:** 192.168.1.116
-- **Ports:** 80, 443
-- **Config:** `/etc/traefik/`
-- **Notes:** Reverse proxy for all services
-
-#### PostgreSQL (ID: 105)
-- **IP:** 192.168.1.117
-- **Port:** 5432
-- **Databases:** immich, n8n (create as needed)
-- **Notes:** Shared database server
-
-#### Redis (ID: 106)
-- **IP:** 192.168.1.118
-- **Port:** 6379
-- **Notes:** Cache for Immich
-
-#### Cloudflared (ID: 107)
-- **IP:** 192.168.1.120
-- **Notes:** Tunnel to Cloudflare
-
----
-
-### Apps Stack
-
-#### Immich (ID: 108)
-- **IP:** 192.168.1.121
-- **Port:** 2283
-- **URL:** immich.harmeetrai.com
-- **Database:** PostgreSQL (immich)
-- **Mounts:**
-  - `/Apollo/Harmeet/photos` → `/mnt/photos`
-
-#### n8n (ID: 109)
-- **IP:** 192.168.1.122
-- **Port:** 5678
-- **URL:** n8n.harmeetrai.com
-- **Database:** PostgreSQL (n8n)
-- **Notes:** Workflow automation
-
----
-
-### Monitoring
-
-#### Prometheus (ID: 110)
-- **IP:** 192.168.1.123
-- **Port:** 9090
-- **Notes:** Metrics collection
-
-#### Grafana (ID: 111)
-- **IP:** 192.168.1.124
-- **Port:** 3000
-- **URL:** grafana.harmeetrai.com
-- **Notes:** Dashboards
-
----
-
-### Development
-
-#### Claude Agent (ID: 130)
-- **IP:** 192.168.1.126
-- **Port:** 22 (SSH only)
-- **User:** claude
-- **Claude CLI:** `/home/claude/.npm-global/bin/claude`
-- **Notes:** Ubuntu LXC running Claude CLI. Accessed via SSH from n8n for AI-powered automations.
-- **Dependencies:** Node.js 20, Claude CLI
-- **SSH Access:** n8n (192.168.1.122) has ed25519 keypair access
-- **Workflows:** [Spotify Playlist Generator](docs/runbooks/spotify-playlist-automation.md)
-
----
-
-## Service URLs (After Traefik + Cloudflare Setup)
-
-| Service | Internal URL | External URL |
-|---------|--------------|--------------|
-| Traefik Dashboard | http://192.168.1.116:8080 | traefik.harmeetrai.com |
+| Service | Internal | External |
+|---------|----------|----------|
+| Traefik | http://192.168.1.116:8080 | — |
 | Immich | http://192.168.1.121:2283 | immich.harmeetrai.com |
 | n8n | http://192.168.1.122:5678 | n8n.harmeetrai.com |
 | Prometheus | http://192.168.1.123:9090 | prometheus.harmeetrai.com |
 | Grafana | http://192.168.1.124:3000 | grafana.harmeetrai.com |
+| Homepage | http://192.168.1.127:3000 | home.harmeetrai.com |
+| Uptime Kuma | http://192.168.1.150:3001 | status.harmeetrai.com |
+| Vikunja | http://192.168.1.132:3456 | tasks.harmeetrai.com |
+| Linkwarden | http://192.168.1.133:3000 | links.harmeetrai.com |
+| Actual Budget | http://192.168.1.134:5006 | budget.harmeetrai.com |
+| Miniflux | http://192.168.1.136:8080 | rss.harmeetrai.com |
 
 ---
 
 ## Network Info
 
 - **Subnet:** 192.168.1.0/24
-- **Gateway:** 192.168.1.1 (assumed)
-- **DNS:** 192.168.1.1 (assumed)
+- **Gateway:** 192.168.1.1
+- **DNS:** 192.168.1.1
+- **Bridge:** vmbr0
 
 ---
 
-## Credentials
+## ID Ranges
 
-**Store securely in Vaultwarden once installed!**
+| Range | Category |
+|-------|----------|
+| 100-109 | Core Infrastructure |
+| 110-119 | Media Stack |
+| 120-129 | Apps |
+| 130-139 | Development/AI |
+| 140-149 | Monitoring |
 
-| Service | Username | Password Location |
-|---------|----------|-------------------|
-| PostgreSQL | postgres | TBD |
-| Grafana | admin | TBD |
-| n8n | — | TBD |
-| Immich | — | TBD |
+---
+
+## Immich Storage Mounts
+
+LXC 108 uses bind mounts to leverage tiered storage:
+
+| Container Path | Host Path | Storage | Purpose |
+|----------------|-----------|---------|---------|
+| `/opt/immich/upload` | `/Apollo/Photos/immich/upload` | RAID | Original photos/videos |
+| `/opt/immich/thumbs` | `/mnt/pve/tesla/cache/immich/thumbs` | NVMe | Generated thumbnails |
+| `/opt/immich/profile` | `/mnt/pve/tesla/cache/immich/profile` | NVMe | User profile images |
+| `/opt/immich/encoded-video` | `/Apollo/Photos/immich/encoded-video` | RAID | Transcoded videos |
+
+See [Deploy Immich Runbook](docs/runbooks/deploy-immich.md) for setup instructions.

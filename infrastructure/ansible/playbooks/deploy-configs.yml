@@ -1,0 +1,31 @@
+---
+- name: Deploy GitOps-managed configurations
+  hosts: config_managed
+  gather_facts: false
+
+  tasks:
+    - name: Ensure config directory exists
+      ansible.builtin.file:
+        path: "{{ config_dest }}"
+        state: directory
+        mode: '0755'
+
+    - name: Sync configuration files
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../../configs/{{ config_src }}/"
+        dest: "{{ config_dest }}/"
+        mode: '0644'
+      register: config_sync_result
+      notify: "reload {{ inventory_hostname }}"
+
+  handlers:
+    - name: reload traefik
+      ansible.builtin.debug:
+        msg: "Traefik uses file provider - config auto-reloads"
+      listen: "reload traefik"
+
+    - name: reload homepage
+      ansible.builtin.command:
+        cmd: docker restart homepage
+      listen: "reload homepage"
+      ignore_errors: true

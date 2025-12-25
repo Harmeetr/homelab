@@ -1,0 +1,15 @@
+---
+# Homepage Dashboard Widgets Configuration
+# Managed via GitOps - changes here auto-deploy to Homepage LXC
+
+- resources:
+    cpu: true
+    memory: true
+    disk: /
+
+- datetime:
+    text_size: xl
+    format:
+      dateStyle: long
+      timeStyle: short
+      hourCycle: h12
