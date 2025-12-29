@@ -422,33 +422,106 @@ Return ONLY valid JSON array, no other text.
 
 ### PostgreSQL Setup Commands
 
-```bash
-# On PostgreSQL LXC (105)
+**Schema file:** `infrastructure/sql/spotify-library-schema.sql`
 
-# 1. Create database and user
-sudo -u postgres psql <<EOF
+```bash
+# =============================================================================
+# STEP 1: On PostgreSQL LXC (105) - Create database and user
+# =============================================================================
+
+# SSH into PostgreSQL LXC
+ssh root@192.168.1.117
+
+# Create database and user
+sudo -u postgres psql << 'EOF'
+-- Create the database
 CREATE DATABASE spotify_library;
-CREATE USER n8n WITH ENCRYPTED PASSWORD 'your_secure_password';
-GRANT ALL PRIVILEGES ON DATABASE spotify_library TO n8n;
+
+-- Create the n8n user with a secure password
+CREATE USER n8n WITH ENCRYPTED PASSWORD 'CHANGE_THIS_PASSWORD';
+
+-- Grant connection privilege
+GRANT CONNECT ON DATABASE spotify_library TO n8n;
+
+-- Switch to the new database
 \c spotify_library
+
+-- Grant schema permissions
 GRANT ALL ON SCHEMA public TO n8n;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO n8n;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO n8n;
+
+-- Grant future table/sequence permissions
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO n8n;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO n8n;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO n8n;
 EOF
 
-# 2. Allow remote connections from n8n (192.168.1.122)
-echo "host    spotify_library    n8n    192.168.1.122/32    scram-sha-256" >> /etc/postgresql/*/main/pg_hba.conf
+# =============================================================================
+# STEP 2: Configure PostgreSQL for remote connections
+# =============================================================================
 
-# 3. Ensure PostgreSQL listens on all interfaces
-# Edit /etc/postgresql/*/main/postgresql.conf
-# Set: listen_addresses = '*'
+# Find PostgreSQL version and config paths
+PG_VERSION=$(ls /etc/postgresql/)
+PG_CONF="/etc/postgresql/${PG_VERSION}/main/postgresql.conf"
+PG_HBA="/etc/postgresql/${PG_VERSION}/main/pg_hba.conf"
 
-# 4. Restart PostgreSQL
+# Allow connections from n8n LXC (192.168.1.122)
+echo "host    spotify_library    n8n    192.168.1.122/32    scram-sha-256" >> $PG_HBA
+
+# Ensure PostgreSQL listens on all interfaces (check if already set)
+grep -q "^listen_addresses" $PG_CONF || echo "listen_addresses = '*'" >> $PG_CONF
+sed -i "s/^#listen_addresses.*/listen_addresses = '*'/" $PG_CONF
+
+# Restart PostgreSQL to apply changes
 systemctl restart postgresql
+systemctl status postgresql
 
-# 5. Test connection from n8n LXC
-# On n8n LXC (109):
-# psql -h 192.168.1.117 -U n8n -d spotify_library
+# =============================================================================
+# STEP 3: Run the schema SQL
+# =============================================================================
+
+# Option A: Copy schema file to LXC and run
+# From your local machine:
+# scp infrastructure/sql/spotify-library-schema.sql root@192.168.1.117:/tmp/
+
+# On the PostgreSQL LXC:
+sudo -u postgres psql -d spotify_library -f /tmp/spotify-library-schema.sql
+
+# Option B: Run via psql from local (if psql installed)
+# psql -h 192.168.1.117 -U n8n -d spotify_library -f infrastructure/sql/spotify-library-schema.sql
+
+# =============================================================================
+# STEP 4: Grant permissions on created objects
+# =============================================================================
+
+sudo -u postgres psql -d spotify_library << 'EOF'
+-- Grant permissions on all existing tables/sequences
+GRANT ALL ON ALL TABLES IN SCHEMA public TO n8n;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO n8n;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO n8n;
+EOF
+
+# =============================================================================
+# STEP 5: Test connection from n8n LXC (109)
+# =============================================================================
+
+# SSH into n8n LXC
+ssh root@192.168.1.122
+
+# Test connection
+psql -h 192.168.1.117 -U n8n -d spotify_library -c "SELECT COUNT(*) FROM songs;"
+
+# Expected output: count = 0 (empty table)
 ```
+
+### Verify Setup
+
+After running the setup commands, verify:
+
+| Check | Command | Expected |
+|-------|---------|----------|
+| Database exists | `\l` in psql | `spotify_library` listed |
+| Tables created | `\dt` in spotify_library | 11 tables shown |
+| Materialized view | `\dm` | `song_stats` shown |
+| Seed tags | `SELECT COUNT(*) FROM tags;` | 24 |
+| Seed playlists | `SELECT COUNT(*) FROM managed_playlists;` | 11 |
+| Sync state | `SELECT * FROM sync_state;` | 4 rows |
